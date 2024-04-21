@@ -5,10 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as esbuild from "esbuild-wasm";
+import { unpkgPathPlugin } from "@/plugin/unpkg-bundle";
+import DisplayCode from "./display-code";
 
 export default function Dashboard() {
   const [inputVal, setInputVal] = useState("");
   const buildRef = useRef<null | any>(null);
+  const [buildString, setBuildString] = useState<string>("");
 
   useEffect(() => {
     async function intialLoadEsbuild() {
@@ -21,13 +24,15 @@ export default function Dashboard() {
   }, []);
 
   const handleSubmit = async () => {
-    let result = await esbuild.transform(inputVal, {
-      jsx: "preserve",
-      loader: "jsx",
-      target: "es2015",
+    let result = await esbuild.build({
+      entryPoints: ["index.js"],
+      bundle: true,
+      write: false,
+      plugins: [unpkgPathPlugin(inputVal)],
     });
 
     console.log(result);
+    setBuildString(result.outputFiles[0].text);
   };
 
   return (
@@ -46,7 +51,11 @@ export default function Dashboard() {
             onChange={(evt) => setInputVal(evt.target.value)}
           />
           <Button onClick={handleSubmit}>Submit</Button>
+          <iframe sandbox="allow-same-origin">
+            <DisplayCode />
+          </iframe>
         </div>
+        <pre>{buildString}</pre>
       </TabsContent>
     </Tabs>
   );
