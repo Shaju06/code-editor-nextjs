@@ -51,8 +51,7 @@ export const unpkgPathPlugin = (inputVal: string) => {
               ? `
     const style = document.createElement('style');
     style.innerText = '${data}';
-    document.head.appendChild(style)
-    
+    document.head.appendChild(style) 
     `
               : data;
 
