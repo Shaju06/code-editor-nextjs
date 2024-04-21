@@ -2,11 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as esbuild from "esbuild-wasm";
 import { unpkgPathPlugin } from "@/plugin/unpkg-bundle";
-import DisplayCode from "./display-code";
 
 export default function Dashboard() {
   const [inputVal, setInputVal] = useState("");
@@ -35,6 +34,12 @@ export default function Dashboard() {
     setBuildString(result.outputFiles[0].text);
   };
 
+  const html = useMemo(() => {
+    return `<script>
+    ${buildString}
+    </script>`;
+  }, [buildString]);
+
   return (
     <Tabs defaultValue="code-editor" className="w-full">
       <TabsList className="flex justify-around">
@@ -51,9 +56,7 @@ export default function Dashboard() {
             onChange={(evt) => setInputVal(evt.target.value)}
           />
           <Button onClick={handleSubmit}>Submit</Button>
-          <iframe sandbox="allow-same-origin">
-            <DisplayCode />
-          </iframe>
+          <iframe sandbox="allow-scripts" srcDoc={html} />
         </div>
         <pre>{buildString}</pre>
       </TabsContent>
