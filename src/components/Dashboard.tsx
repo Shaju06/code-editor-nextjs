@@ -1,14 +1,17 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as esbuild from "esbuild-wasm";
 import { unpkgPathPlugin } from "@/plugin/unpkg-bundle";
 
+import dynamic from "next/dynamic";
+import Preview from "./Preview";
+import ResizeWindow from "./ReszieWindow";
+
+const CodeEditor = dynamic(() => import("./CodeEditor"), { ssr: false });
+
 export default function Dashboard() {
-  const [inputVal, setInputVal] = useState("");
   const buildRef = useRef<null | any>(null);
   const [buildString, setBuildString] = useState<string>("");
 
@@ -22,23 +25,16 @@ export default function Dashboard() {
     intialLoadEsbuild();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleChange = async (input: string) => {
     let result = await esbuild.build({
       entryPoints: ["index.js"],
       bundle: true,
       write: false,
-      plugins: [unpkgPathPlugin(inputVal)],
+      plugins: [unpkgPathPlugin(input)],
     });
 
-    console.log(result);
     setBuildString(result.outputFiles[0].text);
   };
-
-  const html = useMemo(() => {
-    return `<script>
-    ${buildString}
-    </script>`;
-  }, [buildString]);
 
   return (
     <Tabs defaultValue="code-editor" className="w-full">
@@ -50,15 +46,12 @@ export default function Dashboard() {
         Make changes to your account here.
       </TabsContent>
       <TabsContent value="code-editor">
-        <div className="flex flex-col gap-4">
-          <Textarea
-            value={inputVal}
-            onChange={(evt) => setInputVal(evt.target.value)}
-          />
-          <Button onClick={handleSubmit}>Submit</Button>
-          <iframe sandbox="allow-scripts" srcDoc={html} />
+        <div className="flex flex-row">
+          <ResizeWindow direction="horizontal">
+            <CodeEditor onChange={(value) => handleChange(value)} />
+          </ResizeWindow>
+          <Preview code={buildString} />
         </div>
-        <pre>{buildString}</pre>
       </TabsContent>
     </Tabs>
   );
